@@ -3,6 +3,7 @@
 @tailwind utilities;
 
 :root {
+  /* Core Colors (Light Mode) */
   --color-primary: #7c3aed;
   --color-accent: #22d3ee;
   --color-background: #ffffff;
@@ -12,6 +13,7 @@
   --color-success: #10b981;
   --color-error: #ef4444;
 
+  /* Rank Colors */
   --rank-bronze: #cd7f32;
   --rank-silver: #c0c0c0;
   --rank-gold: #ffd700;
@@ -31,5 +33,6 @@
 body {
   background-color: var(--color-background);
   color: var(--color-text);
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-mono), monospace;
 }
+

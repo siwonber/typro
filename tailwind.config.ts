@@ -1,9 +1,7 @@
 import type { Config } from 'tailwindcss'
 
 const config: Config = {
-  content: [
-    './src/**/*.{js,ts,jsx,tsx}'
-  ],
+  content: ['./src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
       colors: {
@@ -16,15 +14,16 @@ const config: Config = {
         success: 'var(--color-success)',
         error: 'var(--color-error)',
         rank: {
-            bronze: 'var(--rank-bronze)',
-            silver: 'var(--rank-silver)',
-            gold: 'var(--rank-gold)',
-            platinum: 'var(--rank-platinum)',
-            diamond: 'var(--rank-diamond)',
-                }
+          bronze: 'var(--rank-bronze)',
+          silver: 'var(--rank-silver)',
+          gold: 'var(--rank-gold)',
+          platinum: 'var(--rank-platinum)',
+          diamond: 'var(--rank-diamond)',
+        }
       },
       fontFamily: {
-        sans: ['"Inter"', 'sans-serif']
+        sans: ['var(--font-mono)', 'monospace'], 
+        mono: ['var(--font-mono)', 'monospace'], 
       },
     },
   },
