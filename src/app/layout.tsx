@@ -14,14 +14,12 @@ export const metadata: Metadata = {
   description: 'The ultimate typing battle experience.',
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={robotoMono.variable}>
-      <body className="font-sans antialiased">{children}</body>
+    <html lang="en" className={`${robotoMono.variable} dark`}>
+      <body className="font-sans antialiased bg-background text-text">
+        {children}
+      </body>
     </html>
   )
 }

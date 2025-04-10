@@ -2,37 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  /* Core Colors (Light Mode) */
-  --color-primary: #7c3aed;
-  --color-accent: #22d3ee;
-  --color-background: #ffffff;
-  --color-surface: #f1f5f9;
-  --color-text: #0f172a;
-  --color-muted: #64748b;
-  --color-success: #10b981;
-  --color-error: #ef4444;
+@layer base {
+  html {
+    color-scheme: dark;
+  }
 
-  /* Rank Colors */
-  --rank-bronze: #cd7f32;
-  --rank-silver: #c0c0c0;
-  --rank-gold: #ffd700;
-  --rank-platinum: #00bfff;
-  --rank-diamond: #b9f2ff;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-background: #0f172a;
-    --color-surface: #1e293b;
-    --color-text: #f8fafc;
-    --color-muted: #94a3b8;
+  body {
+    font-family: 'Roboto Mono', monospace;
+    margin: 0;
+    padding: 0;
   }
 }
-
-body {
-  background-color: var(--color-background);
-  color: var(--color-text);
-  font-family: var(--font-mono), monospace;
-}
-
