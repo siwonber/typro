@@ -25,17 +25,19 @@ export default function AuthSwitcher() {
           .select('email')
           .eq('username', identifier)
           .single()
-        if (!profile || error) {
+
+        if (error || !profile) {
           setError('Username not found')
           setLoading(false)
           return
         }
+
         email = profile.email
       }
 
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) {
-        setError(error.message)
+      const { error: loginError } = await supabase.auth.signInWithPassword({ email, password })
+      if (loginError) {
+        setError(loginError.message)
         setLoading(false)
         return
       }
@@ -53,6 +55,7 @@ export default function AuthSwitcher() {
         .select('id')
         .eq('username', username)
         .single()
+
       if (existingUsername) {
         setError('Username already taken')
         setLoading(false)
@@ -63,26 +66,17 @@ export default function AuthSwitcher() {
         email: identifier,
         password,
       })
+
       if (signUpError || !signUpData.user) {
         setError(signUpError?.message || 'Sign up failed')
         setLoading(false)
         return
       }
 
-      const { error: loginError } = await supabase.auth.signInWithPassword({
-        email: identifier,
-        password,
-      })
-      if (loginError) {
-        setError(loginError.message)
-        setLoading(false)
-        return
-      }
-
-      const { data } = await supabase.auth.getSession()
-      const uid = data.session?.user?.id
-      if (!uid) {
-        setError('Session not found after login')
+      const { data: sessionData, error: sessionError } = await supabase.auth.getUser()
+      const uid = sessionData.user?.id
+      if (!uid || sessionError) {
+        setError('Session not found after signup')
         setLoading(false)
         return
       }
@@ -115,7 +109,7 @@ export default function AuthSwitcher() {
       <h1 className="text-2xl font-bold">{isLogin ? 'Login' : 'Sign Up'}</h1>
       <input
         type="text"
-        placeholder={isLogin ? 'Username or Email' : 'Email'}
+        placeholder={isLogin ? 'Email' : 'Email'}
         value={identifier}
         onChange={(e) => setIdentifier(e.target.value)}
         className="w-full max-w-xs px-4 py-2 border rounded"

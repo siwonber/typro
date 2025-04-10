@@ -2,10 +2,10 @@
 
 export default function NewsFeed() {
   const news = [
-    { title: '🚀 Version 1.0 ist da!', text: 'Multiplayer + Elo-System aktiv.' },
+    { title: '🚀 Version 0.3 ist da!', text: 'Challenges aktiv.' },
     { title: '⚔️ Neue Arena: "Rival Rush"', text: 'Kämpfe live gegen andere Spieler.' },
     { title: '📚 Erste FH-Woche überlebt!', text: 'Nur 3 Nervenzusammenbrüche und 1 Kaffeevergiftung. Läuft.' },
-    { title: '🥐 Mensa-Update:', text: 'Der mysteriöse "Veggie Wrap Deluxe" bleibt unidentifiziert.' },
+    { title: '🥐 Mensa-Update:', text: 'Die mysteriöse "Bosna" bleibt unidentifiziert.' },
     { title: '📣 Typing-Turnier nächste Woche!', text: 'Mit Preisen wie Ruhm, Ehre und einem halben Müsliriegel.' },
     { title: '🐛 Bugfixes & Features', text: 'Der Logout-Button funktioniert jetzt wirklich. Versprochen.' },
     { title: '💡 FH Salzburg Pro-Tipp:', text: 'Nie „nur kurz“ in die Bib gehen. Du kommst erst zum Abendessen wieder raus.' },
