@@ -1,73 +1,67 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { supabase } from '@/lib/supabaseClient'
+import Countdown from './Countdown'
+import ResultPopup from './ResultPopup'
 
 interface Challenge {
-  id: number
+  id: string
   title: string
   description: string
   text: string
+  required_accuracy: number
+  time_limit: number
+  badge_name: string
 }
 
-const challenges: Challenge[] = [
-  {
-    id: 1,
-    title: 'J I L Madness',
-    description: 'Type a tricky text with many j, i, and l.',
-    text: 'jill jilted jim just in july, illicitly juggling ill jellies.'
-  },
-  {
-    id: 2,
-    title: 'Quick Brown Fox',
-    description: 'The classic typing challenge.',
-    text: 'The quick brown fox jumps over the lazy dog.'
-  },
-  {
-    id: 3,
-    title: 'Punctuation Frenzy',
-    description: 'Accurate typing of punctuation marks.',
-    text: 'Wait—did you say "fast-typing," or was it "fast typing"?'
-  },
-  {
-    id: 4,
-    title: 'Number Ninja',
-    description: 'Challenge your numeric typing skills.',
-    text: '1234567890 times typing 0987654321 is 1219326311126352690.'
-  },
-  {
-    id: 5,
-    title: 'Tongue Twister Typing',
-    description: 'Try typing this tongue twister accurately.',
-    text: 'She sells seashells by the seashore; the shells she sells are surely seashells.'
-  },
-  {
-    id: 6,
-    title: 'Caps Lock Chaos',
-    description: 'Master alternating uppercase letters.',
-    text: 'TyPiNg WiTh AlTeRnAtInG CaPs Is QuItE ThE ChAlLeNgE!'
-  }
-]
-
-export default function Challenges() {
+export default function Challenge() {
+  const [challenges, setChallenges] = useState<Challenge[]>([])
   const [activeChallenge, setActiveChallenge] = useState<Challenge | null>(null)
   const [userInput, setUserInput] = useState('')
   const [accuracy, setAccuracy] = useState(100)
   const [completed, setCompleted] = useState(false)
+  const [startTime, setStartTime] = useState<number | null>(null)
+  const [isTyping, setIsTyping] = useState(false)
+  const [showPopup, setShowPopup] = useState(false)
+  const [isSuccess, setIsSuccess] = useState(false)
 
   const inputRef = useRef<HTMLInputElement>(null)
+
+  // Fetch challenges from Supabase
+  const fetchChallenges = async () => {
+    try {
+      const { data, error } = await supabase.from('challenges').select('*')
+      if (error) throw error
+      setChallenges(data || [])
+    } catch (error) {
+      console.error('Error fetching challenges:', error)
+    }
+  }
+
+  useEffect(() => {
+    fetchChallenges()
+  }, [])
 
   useEffect(() => {
     if (activeChallenge) {
       setUserInput('')
       setAccuracy(100)
       setCompleted(false)
-      inputRef.current?.focus()
+      setIsTyping(false)
     }
   }, [activeChallenge])
+
+  const startChallenge = () => {
+    setIsTyping(true)
+    setStartTime(Date.now())
+  }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
     setUserInput(value)
+
+    if (!isTyping) return
 
     const correctText = activeChallenge?.text.slice(0, value.length) || ''
     const errors = correctText.split('').filter((char, i) => char !== value[i]).length
@@ -76,8 +70,33 @@ export default function Challenges() {
     setAccuracy(Number(accuracyCalc.toFixed(2)))
 
     if (value === activeChallenge?.text) {
-      setCompleted(true)
+      handleCompletion(true)
     }
+  }
+
+  const handleCompletion = async (success: boolean) => {
+    const timeTaken = startTime ? (Date.now() - startTime) / 1000 : 0
+
+    setShowPopup(true)
+    setIsSuccess(success && accuracy >= (activeChallenge?.required_accuracy || 0) && timeTaken <= (activeChallenge?.time_limit || 0))
+
+    // Save to Supabase
+    if (success) {
+      const { data: userData } = await supabase.auth.getUser()
+      const userId = userData?.user?.id
+      await supabase.from('user_challenges').insert([{
+        user_id: userId,
+        challenge_id: activeChallenge?.id,
+        accuracy,
+        time_taken: timeTaken,
+        success
+      }])
+    }
+  }
+
+  const handlePopupClose = () => {
+    setShowPopup(false)
+    setActiveChallenge(null)
   }
 
   return (
@@ -85,11 +104,9 @@ export default function Challenges() {
       {!activeChallenge ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {challenges.map(ch => (
-            <div
-              key={ch.id}
+            <div key={ch.id}
               className="bg-surface hover:bg-primary/10 p-4 rounded-xl cursor-pointer shadow-md transition-all"
-              onClick={() => setActiveChallenge(ch)}
-            >
+              onClick={() => setActiveChallenge(ch)}>
               <h2 className="text-xl font-bold">{ch.title}</h2>
               <p className="opacity-80">{ch.description}</p>
             </div>
@@ -97,10 +114,7 @@ export default function Challenges() {
         </div>
       ) : (
         <div className="space-y-4">
-          <button
-            className="px-4 py-1 border border-primary rounded-full"
-            onClick={() => setActiveChallenge(null)}
-          >
+          <button className="px-4 py-1 border border-primary rounded-full" onClick={() => setActiveChallenge(null)}>
             ← Back
           </button>
 
@@ -108,25 +122,29 @@ export default function Challenges() {
             <h3 className="text-lg font-semibold">{activeChallenge.title}</h3>
             <p className="mt-2 text-muted">{activeChallenge.text}</p>
 
-            <input
-              ref={inputRef}
-              value={userInput}
-              onChange={handleInputChange}
-              placeholder="Start typing..."
-              className="w-full mt-4 px-3 py-2 rounded border border-muted bg-background focus:outline-primary"
-            />
+            {/* Start Countdown */}
+            {!isTyping ? (
+              <Countdown onCountdownFinish={startChallenge} />
+            ) : (
+              <input ref={inputRef} value={userInput} onChange={handleInputChange} placeholder="Start typing..."
+                className="w-full mt-4 px-3 py-2 rounded border border-muted bg-background focus:outline-primary" />
+            )}
 
             <div className="mt-4">
               Accuracy: <strong>{accuracy}%</strong>
             </div>
-
-            {completed && (
-              <div className="mt-2 text-success font-bold">
-                🎉 Challenge completed successfully!
-              </div>
-            )}
           </div>
         </div>
+      )}
+
+      {/* Popup for result */}
+      {showPopup && (
+        <ResultPopup
+          accuracy={accuracy}
+          timeTaken={((Date.now() - startTime!) / 1000)}
+          onClose={handlePopupClose}
+          isSuccess={isSuccess}
+        />
       )}
     </div>
   )
