@@ -12,7 +12,7 @@ interface Challenge {
   text: string
   required_accuracy: number
   time_limit: number
-  badge_name: string
+  badge: string // Badge-Feld hinzugefügt
 }
 
 export default function Challenge() {
@@ -75,23 +75,36 @@ export default function Challenge() {
   }
 
   const handleCompletion = async (success: boolean) => {
+    if (!activeChallenge) return
+
     const timeTaken = startTime ? (Date.now() - startTime) / 1000 : 0
 
+    // Fetching current user
+    const { data: userData } = await supabase.auth.getUser()
+
+    if (!userData?.user) {
+      console.error('User not logged in')
+      return
+    }
+
+    const userId = userData.user.id
+
+    const { data, error } = await supabase.from('user_challenges').insert([{
+      user_id: userId,                     // Benutzer-ID
+      challenge_id: activeChallenge.id,    // Challenge-ID
+      accuracy,                            // Genauigkeit
+      time_taken: timeTaken,                // Zeit
+      success,                             // Erfolg (ob die Challenge abgeschlossen wurde)
+      badge: activeChallenge.badge         // Badge der Challenge
+    }])
+
+    if (error) {
+      console.error('Error saving challenge result:', error)
+    }
+
+    setCompleted(true)
     setShowPopup(true)
     setIsSuccess(success && accuracy >= (activeChallenge?.required_accuracy || 0) && timeTaken <= (activeChallenge?.time_limit || 0))
-
-    // Save to Supabase
-    if (success) {
-      const { data: userData } = await supabase.auth.getUser()
-      const userId = userData?.user?.id
-      await supabase.from('user_challenges').insert([{
-        user_id: userId,
-        challenge_id: activeChallenge?.id,
-        accuracy,
-        time_taken: timeTaken,
-        success
-      }])
-    }
   }
 
   const handlePopupClose = () => {

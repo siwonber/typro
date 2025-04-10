@@ -1,12 +1,51 @@
 'use client'
 
-export default function Challenges() {
+import { useState, useEffect } from 'react'
+import { supabase } from '@/lib/supabaseClient'
+
+export default function OverviewPage() {
+  const [profile, setProfile] = useState<any>(null)
+  const [loading, setLoading] = useState<boolean>(true)
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        // Abrufen der Profildaten des Benutzers
+        const { data, error } = await supabase.from('profiles').select('*').single()
+
+        if (error) {
+          // Zeigt den detaillierten Fehler an
+          console.error('❌ profile fetch error', error)
+          throw error
+        }
+
+        console.log('📄 profile data', data)
+
+        if (data) {
+          setProfile(data)
+        }
+      } catch (error) {
+        console.error('Failed to fetch profile:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchProfile()
+  }, [])
+
+  if (loading) {
+    return <p>Loading...</p>
+  }
+
+  if (!profile) {
+    return <p>Profile not found.</p>
+  }
+
   return (
-    <section className="bg-[var(--color-surface)] bg-opacity-5 border border-[var(--color-muted)] p-6 rounded-xl">
-      <h2 className="text-xl font-bold mb-4">Herausforderungen</h2>
-      <p className="text-sm text-[var(--color-muted)]">
-        In Kürze verfügbar: Sammle Achievements, schalte Titel frei und zeige deine Skills!
-      </p>
-    </section>
+    <div>
+      <h1>{profile.name}</h1>
+      <p>{profile.email}</p>
+    </div>
   )
 }
