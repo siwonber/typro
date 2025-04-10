@@ -1,32 +1,65 @@
 'use client'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabaseClient'
 
 type SidebarProps = {
   setActive: (val: 'profile' | 'news') => void
 }
 
 export default function Sidebar({ setActive }: SidebarProps) {
-  const online = ['NΔRĐ LOKASON', 'showdown', 'TomTom246']
-  const offline = ['4D World', 'SiriusBlack', 'AdrianneAvenicci']
+  const [username, setUsername] = useState('...')
+  const [avatarUrl, setAvatarUrl] = useState('/images/profile/avatar.png')
+  const [isOnline, setIsOnline] = useState(false)
+
+  const online = ['mario', 'adri', 'ChrizzyConstanze']
+  const offline = ['marcusAurelius', 'tibruh', 'gina']
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      const uid = session?.user?.id
+      if (!uid) return
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('username, avatar_url, is_online')
+        .eq('id', uid)
+        .single()
+
+      if (data) {
+        setUsername(data.username || 'Unknown')
+        setAvatarUrl(data.avatar_url || '/images/profile/avatar.png')
+        setIsOnline(data.is_online)
+      }
+    }
+
+    fetchProfile()
+  }, [])
 
   return (
     <div className="h-full w-[280px] bg-surface border-l border-muted p-6 flex flex-col gap-6 text-sm text-text">
-        {/* Profil */}
-        <Link
+      {/* Profil */}
+      <Link
         href="/profile/overview"
         className="flex items-center gap-4 cursor-pointer hover:opacity-90"
       >
         <Image
-          src="/images/profile/avatar.png"
+          src={avatarUrl}
           alt="Profil"
           width={64}
           height={64}
           className="rounded-full border-2 border-primary object-cover"
         />
         <div>
-          <p className="font-bold text-base">SOM3THING</p>
-          <p className="text-success text-xs">Online</p>
+          <p className="font-bold text-base">{username}</p>
+          <p className={`text-xs ${isOnline ? 'text-success' : 'text-muted'}`}>
+            {isOnline ? 'Online' : 'Offline'}
+          </p>
         </div>
       </Link>
 

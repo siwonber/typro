@@ -1,48 +1,28 @@
-// src/lib/auth-helpers-react.ts
+'use client'
 
-import { createClient } from '@supabase/supabase-js'
 import { useEffect, useState } from 'react'
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string
-const supabase = createClient(supabaseUrl, supabaseKey)
+import { supabase } from './supabaseClient'
+import { Session } from '@supabase/supabase-js'  
 
 export function useSession() {
-  const [session, setSession] = useState<any>(null)
+  const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const hardcodedUserEmail = 'test@test.com'
-    const hardcodedPassword = '123'
-
-
-    const login = async () => {
-      try {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: hardcodedUserEmail,
-          password: hardcodedPassword
-        })
-
-        if (error) throw error
-        setSession({ user: data.user })
-      } catch (error) {
-        console.log("Login failed", error)
-      } finally {
-        setLoading(false)
-      }
+    const getSession = async () => {
+      const { data } = await supabase.auth.getSession()
+      setSession(data?.session ?? null)
+      setLoading(false)  
     }
 
-    login()
+    getSession()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setSession(session)
-        setLoading(false)
-      }
-    )
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)  
+    })
 
     return () => {
-      subscription.unsubscribe()
+      listener.subscription.unsubscribe()
     }
   }, [])
 

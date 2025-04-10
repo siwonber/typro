@@ -6,8 +6,8 @@ import { supabase } from '@/lib/supabaseClient'
 
 export default function AuthSwitcher() {
   const [isLogin, setIsLogin] = useState(true)
-  const [identifier, setIdentifier] = useState('') 
-  const [username, setUsername] = useState('') 
+  const [identifier, setIdentifier] = useState('')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -16,36 +16,31 @@ export default function AuthSwitcher() {
   const handleSubmit = async () => {
     setLoading(true)
     setError(null)
+    let email = identifier
 
     if (isLogin) {
-      let email = identifier
-
       if (!identifier.includes('@')) {
-        const { data, error } = await supabase
+        const { data: profile, error } = await supabase
           .from('profiles')
-          .select('id')
+          .select('email')
           .eq('username', identifier)
           .single()
-
-        if (!data || error) {
+        if (!profile || error) {
           setError('Username not found')
           setLoading(false)
           return
         }
-
-        const { data: userData, error: userError } = await supabase.auth.admin.getUserById(data.id)
-        if (!userData || !userData.user?.email || userError) {
-          setError('No account linked to that username')
-          setLoading(false)
-          return
-        }
-
-        email = userData.user.email
+        email = profile.email
       }
 
       const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) setError(error.message)
-      else router.push('/home')
+      if (error) {
+        setError(error.message)
+        setLoading(false)
+        return
+      }
+
+      router.replace('/home')
     } else {
       if (username.length < 3) {
         setError('Username too short')
@@ -58,27 +53,49 @@ export default function AuthSwitcher() {
         .select('id')
         .eq('username', username)
         .single()
-
       if (existingUsername) {
         setError('Username already taken')
         setLoading(false)
         return
       }
 
-      const { data, error: signUpError } = await supabase.auth.signUp({
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: identifier,
         password,
       })
-
-      if (signUpError || !data.user) {
+      if (signUpError || !signUpData.user) {
         setError(signUpError?.message || 'Sign up failed')
         setLoading(false)
         return
       }
 
+      const { error: loginError } = await supabase.auth.signInWithPassword({
+        email: identifier,
+        password,
+      })
+      if (loginError) {
+        setError(loginError.message)
+        setLoading(false)
+        return
+      }
+
+      const { data } = await supabase.auth.getSession()
+      const uid = data.session?.user?.id
+      if (!uid) {
+        setError('Session not found after login')
+        setLoading(false)
+        return
+      }
+
       const { error: profileError } = await supabase.from('profiles').insert({
-        id: data.user.id,  
+        id: uid,
         username,
+        email: identifier,
+        avatar_url: '',
+        rank_solo: 'Bronze',
+        rank_duo: 'Bronze',
+        rank_tournament: 'Bronze',
+        is_online: true,
       })
 
       if (profileError) {
@@ -87,7 +104,7 @@ export default function AuthSwitcher() {
         return
       }
 
-      router.push('/home')
+      router.replace('/home')
     }
 
     setLoading(false)
@@ -95,52 +112,41 @@ export default function AuthSwitcher() {
 
   return (
     <div className="flex flex-col gap-4 items-center text-center bg-surface px-6 py-10 rounded-lg shadow-md">
-      <h1 className="text-2xl font-bold">
-        {isLogin ? 'Login' : 'Sign Up'}
-      </h1>
-
+      <h1 className="text-2xl font-bold">{isLogin ? 'Login' : 'Sign Up'}</h1>
       <input
         type="text"
         placeholder={isLogin ? 'Username or Email' : 'Email'}
         value={identifier}
-        onChange={e => setIdentifier(e.target.value)}
+        onChange={(e) => setIdentifier(e.target.value)}
         className="w-full max-w-xs px-4 py-2 border rounded"
       />
-
       {!isLogin && (
         <input
           type="text"
           placeholder="Username"
           value={username}
-          onChange={e => setUsername(e.target.value)}
+          onChange={(e) => setUsername(e.target.value)}
           className="w-full max-w-xs px-4 py-2 border rounded"
         />
       )}
-
       <input
         type="password"
         placeholder="Password"
         value={password}
-        onChange={e => setPassword(e.target.value)}
+        onChange={(e) => setPassword(e.target.value)}
         className="w-full max-w-xs px-4 py-2 border rounded"
       />
-
       {error && <p className="text-error text-sm">{error}</p>}
-
       <button
         onClick={handleSubmit}
         disabled={loading}
         className="bg-primary text-white px-6 py-2 rounded hover:opacity-80 w-full max-w-xs"
       >
-        {loading ? (isLogin ? 'Logging in...' : 'Creating...') : (isLogin ? 'Login' : 'Sign Up')}
+        {loading ? (isLogin ? 'Logging in...' : 'Creating...') : isLogin ? 'Login' : 'Sign Up'}
       </button>
-
       <p className="text-sm text-muted">
         {isLogin ? "Don't have an account?" : "Already have an account?"}{' '}
-        <button
-          className="text-accent underline"
-          onClick={() => setIsLogin(!isLogin)}
-        >
+        <button className="text-accent underline" onClick={() => setIsLogin(!isLogin)}>
           {isLogin ? 'Sign up' : 'Log in'}
         </button>
       </p>

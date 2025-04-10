@@ -2,11 +2,12 @@
 
 import TyproLayout from '@/app/typro-layout'
 import NewsFeed from '@/app/components/NewsFeed'
-import useCreateProfile from '../hooks/useCreateProfile'
+import { useSession } from '@/lib/auth-helpers-react'
 
 export default function HomePage() {
-  useCreateProfile()
+  const { session, loading } = useSession()
 
+  if (loading || !session) return null  
   return (
     <TyproLayout>
       <div className="flex justify-center w-full">
