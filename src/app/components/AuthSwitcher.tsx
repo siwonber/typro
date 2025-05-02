@@ -56,11 +56,11 @@ export default function AuthSwitcher() {
         .eq('username', username)
         .single()
 
-      if (existingUsername) {
-        setError('Username already taken')
-        setLoading(false)
-        return
-      }
+        if (existingUsername?.id) {
+          setError('Username already taken')
+          setLoading(false)
+          return
+        }
 
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: identifier,
