@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabaseClient'
 import SettingsModal from './SettingsModal'
 import AddFriendModal from './AddFriendModal'
 import { Cog6ToothIcon, UserPlusIcon } from '@heroicons/react/24/outline'
-import { getFriends } from '../hooks/friends'
+import { getFriends, getIncomingRequests, acceptFriendRequest } from '../hooks/friends'
 
 type SidebarProps = {
   setActive: (val: 'profile' | 'news') => void
@@ -21,9 +21,10 @@ export default function Sidebar({ setActive }: SidebarProps) {
 
   const [onlineFriends, setOnlineFriends] = useState<string[]>([])
   const [offlineFriends, setOfflineFriends] = useState<string[]>([])
+  const [friendRequests, setFriendRequests] = useState<any[]>([])
 
   useEffect(() => {
-    const fetchProfile = async () => {
+    const fetchData = async () => {
       const {
         data: { session },
       } = await supabase.auth.getSession()
@@ -31,37 +32,38 @@ export default function Sidebar({ setActive }: SidebarProps) {
       const uid = session?.user?.id
       if (!uid) return
 
-      const { data } = await supabase
+      const { data: profile } = await supabase
         .from('profiles')
         .select('username, avatar_url, is_online')
         .eq('id', uid)
         .single()
 
-      if (data) {
-        setUsername(data.username || 'Unknown')
-        setAvatarUrl(data.avatar_url || '/images/profile/avatar.png')
-        setIsOnline(data.is_online)
+      if (profile) {
+        setUsername(profile.username || 'Unknown')
+        setAvatarUrl(profile.avatar_url || '/images/profile/avatar.png')
+        setIsOnline(profile.is_online)
       }
+
+      const friends = await getFriends()
+      const online = friends.filter((f) => f.profiles?.is_online).map((f) => f.profiles.username)
+      const offline = friends.filter((f) => !f.profiles?.is_online).map((f) => f.profiles.username)
+      setOnlineFriends(online)
+      setOfflineFriends(offline)
+
+      const incoming = await getIncomingRequests()
+      setFriendRequests(incoming)
     }
 
-    const fetchFriendList = async () => {
-      try {
-        const data = await getFriends()
-        const online = data.filter((f) => f.profiles?.is_online).map((f) => f.profiles.username)
-        const offline = data.filter((f) => !f.profiles?.is_online).map((f) => f.profiles.username)
-        setOnlineFriends(online)
-        setOfflineFriends(offline)
-      } catch (err) {
-        console.error('Could not load friends:', err)
-      }
-    }
-
-    fetchProfile()
-    fetchFriendList()
+    fetchData()
   }, [])
 
+  const handleAccept = async (id: string) => {
+    await acceptFriendRequest(id)
+    setFriendRequests((prev) => prev.filter((r) => r.id !== id))
+  }
+
   return (
-    <div className="h-full w-[280px] bg-surface border-l border-muted p-6 flex flex-col gap-6 text-sm text-text">
+    <div className="h-full w-[280px] bg-surface border-l border-muted p-6 flex flex-col gap-6 text-sm text-text overflow-y-auto">
       {/* Profile */}
       <div className="flex items-center justify-between">
         <Link
@@ -92,15 +94,42 @@ export default function Sidebar({ setActive }: SidebarProps) {
         </div>
       </div>
 
+      {/* Friend Requests */}
+      {friendRequests.length > 0 && (
+        <div className="bg-background/60 p-3 rounded shadow-inner">
+          <h4 className="text-accent font-semibold mb-2">Friend Requests</h4>
+          <div className="flex flex-col gap-2">
+            {friendRequests.map((r) => (
+              <div key={r.id} className="flex items-center justify-between bg-background/80 p-2 rounded">
+                <div className="flex items-center gap-2">
+                  <Image
+                    src={r.profiles.avatar_url || '/images/profile/avatar.png'}
+                    alt="avatar"
+                    width={32}
+                    height={32}
+                    className="rounded-full object-cover"
+                  />
+                  <span className="font-medium">{r.profiles.username}</span>
+                </div>
+                <button
+                  onClick={() => handleAccept(r.id)}
+                  className="text-xs bg-primary text-white px-2 py-1 rounded hover:opacity-90"
+                >
+                  Accept
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Online Friends */}
       <div>
         <h4 className="text-primary font-semibold mb-1">Online</h4>
         <div className="flex flex-col gap-1">
           {onlineFriends.length === 0 && <p className="text-muted text-xs">No one online</p>}
           {onlineFriends.map((name) => (
-            <div key={name} className="px-3 py-1 rounded bg-background/60">
-              {name}
-            </div>
+            <div key={name} className="px-3 py-1 rounded bg-background/60">{name}</div>
           ))}
         </div>
       </div>
@@ -111,9 +140,7 @@ export default function Sidebar({ setActive }: SidebarProps) {
         <div className="flex flex-col gap-1 text-muted">
           {offlineFriends.length === 0 && <p className="text-xs">No friends offline</p>}
           {offlineFriends.map((name) => (
-            <div key={name} className="px-3 py-1 rounded bg-background/20">
-              {name}
-            </div>
+            <div key={name} className="px-3 py-1 rounded bg-background/20">{name}</div>
           ))}
         </div>
       </div>

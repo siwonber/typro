@@ -16,18 +16,21 @@ export default function AuthSwitcher() {
   const handleSubmit = async () => {
     setLoading(true)
     setError(null)
-    let email = identifier
+
+    let email = identifier.trim().toLowerCase()
+    const cleanUsername = username.trim()
 
     if (isLogin) {
-      if (!identifier.includes('@')) {
+      // Check if user typed a username instead of email
+      if (!email.includes('@')) {
         const { data: profile, error } = await supabase
           .from('profiles')
           .select('email')
-          .eq('username', identifier)
+          .eq('username', email)
           .single()
 
-        if (error || !profile) {
-          setError('Username not found')
+        if (error || !profile?.email) {
+          setError('❌ Username not found')
           setLoading(false)
           return
         }
@@ -36,15 +39,16 @@ export default function AuthSwitcher() {
       }
 
       const { error: loginError } = await supabase.auth.signInWithPassword({ email, password })
+
       if (loginError) {
-        setError(loginError.message)
+        setError('❌ ' + loginError.message)
         setLoading(false)
         return
       }
 
       router.replace('/home')
     } else {
-      if (username.length < 3) {
+      if (cleanUsername.length < 3) {
         setError('Username too short')
         setLoading(false)
         return
@@ -53,17 +57,17 @@ export default function AuthSwitcher() {
       const { data: existingUsername } = await supabase
         .from('profiles')
         .select('id')
-        .eq('username', username)
+        .eq('username', cleanUsername)
         .single()
 
-        if (existingUsername?.id) {
-          setError('Username already taken')
-          setLoading(false)
-          return
-        }
+      if (existingUsername) {
+        setError('Username already taken')
+        setLoading(false)
+        return
+      }
 
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-        email: identifier,
+        email,
         password,
       })
 
@@ -73,22 +77,16 @@ export default function AuthSwitcher() {
         return
       }
 
-      const { data: sessionData, error: sessionError } = await supabase.auth.getUser()
-      const uid = sessionData.user?.id
-      if (!uid || sessionError) {
-        setError('Session not found after signup')
-        setLoading(false)
-        return
-      }
+      const userId = signUpData.user.id
 
       const { error: profileError } = await supabase.from('profiles').insert({
-        id: uid,
-        username,
-        email: identifier,
-        avatar_url: '',
-        rank_solo: 'Bronze',
-        rank_duo: 'Bronze',
-        rank_tournament: 'Bronze',
+        id: userId,
+        username: cleanUsername,
+        email,
+        avatar_url: '/images/profile/avatar.png',
+        rank_solo: 'bronze',
+        rank_duo: 'bronze',
+        rank_tournament: 'bronze',
         is_online: true,
       })
 
@@ -109,7 +107,7 @@ export default function AuthSwitcher() {
       <h1 className="text-2xl font-bold">{isLogin ? 'Login' : 'Sign Up'}</h1>
       <input
         type="text"
-        placeholder={isLogin ? 'Email' : 'Email'}
+        placeholder={isLogin ? 'Email or Username' : 'Email'}
         value={identifier}
         onChange={(e) => setIdentifier(e.target.value)}
         className="w-full max-w-xs px-4 py-2 border rounded"

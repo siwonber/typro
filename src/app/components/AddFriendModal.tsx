@@ -1,33 +1,37 @@
 'use client'
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
-import { addFriend } from '../hooks/friends'
+import { addFriend } from '@/app/hooks/friends'
 
-type Props = {
-  onClose: () => void
-}
+type Props = { onClose: () => void }
 
 export default function AddFriendModal({ onClose }: Props) {
   const [username, setUsername] = useState('')
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
+  const [success, setSuccess] = useState(false)
 
   const handleAdd = async () => {
     setLoading(true)
-    const res = await fetch('/api/getUserByUsername?username=' + username)
-    const data = await res.json()
-
-    if (!data?.id) {
-      setMessage('User not found.')
-      setLoading(false)
-      return
-    }
+    setMessage('')
+    setSuccess(false)
 
     try {
+      const res = await fetch('/api/getUserByUsername?username=' + username)
+      const data = await res.json()
+
+      if (!data?.id) {
+        setMessage('User not found.')
+        setLoading(false)
+        return
+      }
+
       await addFriend(data.id)
-      setMessage('Friend request sent!')
+      setMessage('✅ Friend request sent!')
+      setSuccess(true)
     } catch (err) {
-      setMessage('Error: ' + (err as Error).message)
+      console.error(err)
+      setMessage('❌ ' + (err as Error).message)
     } finally {
       setLoading(false)
     }
@@ -43,13 +47,14 @@ export default function AddFriendModal({ onClose }: Props) {
           className="w-full px-4 py-2 rounded border border-muted bg-background mb-2"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
+          disabled={loading || success}
         />
         <button
           onClick={handleAdd}
-          disabled={loading}
+          disabled={loading || success}
           className="w-full bg-primary text-white py-2 rounded hover:opacity-90"
         >
-          {loading ? 'Sending...' : 'Send Request'}
+          {loading ? 'Sending...' : success ? 'Sent!' : 'Send Request'}
         </button>
         {message && <p className="mt-2 text-sm">{message}</p>}
         <button

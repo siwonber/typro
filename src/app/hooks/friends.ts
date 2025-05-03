@@ -58,3 +58,46 @@ export async function getFriends(): Promise<FriendRecord[]> {
   if (error) throw error
   return data as unknown as FriendRecord[]
 }
+
+export async function getIncomingRequests() {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+  const userId = session?.user?.id
+  if (!userId) throw new Error('Not authenticated')
+
+  const { data, error } = await supabase
+    .from('friends')
+    .select(`id, user_id, profiles:user_id(username, avatar_url)`)
+    .eq('friend_id', userId)
+    .eq('status', 'pending')
+
+  if (error) throw error
+  return data
+}
+
+
+export async function acceptFriendRequest(friendRequestId: string) {
+  const { error: updateError } = await supabase
+    .from('friends')
+    .update({ status: 'accepted' })
+    .eq('id', friendRequestId)
+
+  if (updateError) throw updateError
+
+  const { data, error } = await supabase
+    .from('friends')
+    .select('user_id, friend_id')
+    .eq('id', friendRequestId)
+    .single()
+
+  if (error || !data) return
+
+  const { user_id, friend_id } = data
+
+  await supabase.from('friends').insert({
+    user_id: friend_id,
+    friend_id: user_id,
+    status: 'accepted',
+  })
+}
