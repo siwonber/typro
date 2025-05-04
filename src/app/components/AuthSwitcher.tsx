@@ -38,13 +38,19 @@ export default function AuthSwitcher() {
         email = profile.email
       }
 
-      const { error: loginError } = await supabase.auth.signInWithPassword({ email, password })
+      const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({ email, password })
 
-      if (loginError) {
-        setError('❌ ' + loginError.message)
+      if (loginError || !loginData.user) {
+        setError('❌ ' + (loginError?.message ?? 'Unknown error'))
         setLoading(false)
         return
       }
+
+      // ✅ Mark user as online
+      await supabase
+        .from('profiles')
+        .update({ is_online: true })
+        .eq('id', loginData.user.id)
 
       router.replace('/home')
     } else {

@@ -10,20 +10,30 @@ export default function OverviewPage() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        // Abrufen der Profildaten des Benutzers
-        const { data, error } = await supabase.from('profiles').select('*').single()
+        const {
+          data: { session },
+          error: sessionError,
+        } = await supabase.auth.getSession()
+
+        if (sessionError || !session?.user) {
+          throw new Error('No user session found')
+        }
+
+        const userId = session.user.id
+
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single()
 
         if (error) {
-          // Zeigt den detaillierten Fehler an
           console.error('❌ profile fetch error', error)
           throw error
         }
 
         console.log('📄 profile data', data)
-
-        if (data) {
-          setProfile(data)
-        }
+        setProfile(data)
       } catch (error) {
         console.error('Failed to fetch profile:', error)
       } finally {
@@ -34,17 +44,12 @@ export default function OverviewPage() {
     fetchProfile()
   }, [])
 
-  if (loading) {
-    return <p>Loading...</p>
-  }
-
-  if (!profile) {
-    return <p>Profile not found.</p>
-  }
+  if (loading) return <p>Loading...</p>
+  if (!profile) return <p>Profile not found.</p>
 
   return (
     <div>
-      <h1>{profile.name}</h1>
+      <h1>{profile.username}</h1>
       <p>{profile.email}</p>
     </div>
   )

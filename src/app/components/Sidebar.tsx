@@ -63,28 +63,25 @@ export default function Sidebar({ setActive }: SidebarProps) {
   }
 
   return (
-    <div className="h-full w-[280px] bg-surface border-l border-muted p-6 flex flex-col gap-6 text-sm text-text overflow-y-auto">
+    <div className="h-full w-[280px] bg-surface border-l border-muted p-6 flex flex-col items-center text-sm text-text overflow-y-auto">
       {/* Profile */}
-      <div className="flex items-center justify-between">
-        <Link
-          href="/profile/overview"
-          className="flex items-center gap-4 cursor-pointer hover:opacity-90"
-        >
-          <Image
-            src={avatarUrl}
-            alt="Profile"
-            width={64}
-            height={64}
-            className="rounded-full border-2 border-primary object-cover"
-          />
-          <div>
-            <p className="font-bold text-base">{username}</p>
-            <p className={`text-xs ${isOnline ? 'text-success' : 'text-muted'}`}>
-              {isOnline ? 'Online' : 'Offline'}
-            </p>
+      <div className="flex flex-col items-center gap-2 mb-6">
+        <Link href="/profile/overview" className="hover:opacity-90 group relative">
+          <div className={`p-1 rounded-full border-4 ${isOnline ? 'border-yellow-400' : 'border-muted'} transition`}>
+            <Image
+              src={avatarUrl}
+              alt="Profile"
+              width={80}
+              height={80}
+              className="rounded-full object-cover"
+            />
           </div>
         </Link>
-        <div className="flex gap-2">
+        <p className="font-bold text-base">{username}</p>
+        <p className={`text-xs ${isOnline ? 'text-success' : 'text-muted'}`}>
+          {isOnline ? 'Online' : 'Offline'}
+        </p>
+        <div className="flex gap-3 mt-2">
           <button onClick={() => setShowSettings(true)} className="p-1 text-muted hover:text-text">
             <Cog6ToothIcon className="w-5 h-5" />
           </button>
@@ -96,7 +93,7 @@ export default function Sidebar({ setActive }: SidebarProps) {
 
       {/* Friend Requests */}
       {friendRequests.length > 0 && (
-        <div className="bg-background/60 p-3 rounded shadow-inner">
+        <div className="w-full bg-background/60 p-3 rounded shadow-inner mb-4">
           <h4 className="text-accent font-semibold mb-2">Friend Requests</h4>
           <div className="flex flex-col gap-2">
             {friendRequests.map((r) => (
@@ -124,7 +121,7 @@ export default function Sidebar({ setActive }: SidebarProps) {
       )}
 
       {/* Online Friends */}
-      <div>
+      <div className="w-full mb-4">
         <h4 className="text-primary font-semibold mb-1">Online</h4>
         <div className="flex flex-col gap-1">
           {onlineFriends.length === 0 && <p className="text-muted text-xs">No one online</p>}
@@ -135,7 +132,7 @@ export default function Sidebar({ setActive }: SidebarProps) {
       </div>
 
       {/* Offline Friends */}
-      <div>
+      <div className="w-full">
         <h4 className="text-muted font-semibold mb-1">Offline</h4>
         <div className="flex flex-col gap-1 text-muted">
           {offlineFriends.length === 0 && <p className="text-xs">No friends offline</p>}
@@ -145,6 +142,7 @@ export default function Sidebar({ setActive }: SidebarProps) {
         </div>
       </div>
 
+      {/* Modals */}
       {showSettings && (
         <SettingsModal
           currentAvatar={avatarUrl}
