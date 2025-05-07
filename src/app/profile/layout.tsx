@@ -1,5 +1,5 @@
-import TyproLayout from '@/app/typro-layout'
-import ProfileHeader from '@/app/profile/ProfileHeader'
+import TyproLayout from '@/typro-layout'
+import ProfileHeader from '@/profile/ProfileHeader'
 
 export default function ProfileLayout({ children }: { children: React.ReactNode }) {
   return (

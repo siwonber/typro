@@ -2,7 +2,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabaseClient'
+import { supabase } from '@lib/supabaseClient'
 import SettingsModal from './SettingsModal'
 import AddFriendModal from './AddFriendModal'
 import { Cog6ToothIcon, UserPlusIcon } from '@heroicons/react/24/outline'

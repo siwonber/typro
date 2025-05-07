@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
-import { addFriend } from '@/app/hooks/friends'
+import { addFriend } from '@/hooks/friends'
 
 type Props = { onClose: () => void }
 

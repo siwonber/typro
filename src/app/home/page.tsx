@@ -1,8 +1,8 @@
 'use client'
 
-import TyproLayout from '@/app/typro-layout'
-import NewsFeed from '@/app/components/NewsFeed'
-import { useSession } from '@/lib/auth-helpers-react'
+import TyproLayout from '@/typro-layout'
+import NewsFeed from '@/components/NewsFeed'
+import { useSession } from '@lib/auth-helpers-react'
 
 export default function HomePage() {
   const { session, loading } = useSession()

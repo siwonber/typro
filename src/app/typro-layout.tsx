@@ -1,11 +1,11 @@
 'use client'
 
-import HeaderBar from '@/app/components/HeaderBar'
-import Sidebar from '@/app/components/Sidebar'
-import { useSession } from '@/lib/auth-helpers-react'
+import HeaderBar from '@/components/HeaderBar'
+import Sidebar from '@/components/Sidebar'
+import { useSession } from '@lib/auth-helpers-react'
 import { useState } from 'react'
-import NewsFeed from '@/app/components/NewsFeed'
-import Challenges from '@/app/components/Challenges'
+import NewsFeed from '@/components/NewsFeed'
+import Challenges from '@/components/Challenges'
 
 type ViewType = 'news' | 'challenges' | 'default'
 

@@ -1,7 +1,7 @@
 'use client'
 import { useState, useRef } from 'react'
 import Image from 'next/image'
-import { supabase } from '@/lib/supabaseClient'
+import { supabase } from '@lib/supabaseClient'
 import { createPortal } from 'react-dom'
 
 type SettingsModalProps = {
