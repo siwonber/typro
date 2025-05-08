@@ -29,13 +29,13 @@ export default function FriendRequests() {
           <div key={r.id} className="flex items-center justify-between bg-background/40 p-2 rounded">
             <div className="flex items-center gap-2">
               <Image
-                src={r.profiles.avatar_url || '/images/profile/avatar.png'}
+                src={r.user_profile?.avatar_url || '/images/profile/avatar.png'}
                 alt="avatar"
                 width={32}
                 height={32}
                 className="rounded-full object-cover"
               />
-              <span>{r.profiles.username}</span>
+              <span>{r.user_profile?.username || 'Unknown'}</span>
             </div>
             <button
               onClick={() => handleAccept(r.id)}

@@ -1,10 +1,12 @@
 import { supabase } from '@lib/supabaseClient'
 
+// Add a new friend request (user → friend)
 export async function addFriend(friendId: string) {
   const {
     data: { session },
     error: sessionError,
   } = await supabase.auth.getSession()
+
   if (sessionError || !session?.user) {
     throw new Error('Not authenticated')
   }
@@ -15,15 +17,11 @@ export async function addFriend(friendId: string) {
     .from('friends')
     .insert([{ user_id: userId, friend_id: friendId, status: 'pending' }])
 
-  if (error) {
-    throw error
-  }
-
+  if (error) throw error
   return true
 }
 
-
-
+// Get accepted friends (friend_id → profile)
 type FriendProfile = {
   username: string
   is_online: boolean
@@ -39,13 +37,15 @@ export async function getFriends(): Promise<FriendRecord[]> {
     data: { session },
     error: sessionError,
   } = await supabase.auth.getSession()
-  if (sessionError || !session?.user) throw sessionError
 
+  if (sessionError || !session?.user) throw sessionError
   const userId = session.user.id
 
   const { data, error } = await supabase
     .from('friends')
     .select(`
+      id,
+      user_id,
       friend_id,
       profiles:friend_id (
         username,
@@ -59,16 +59,18 @@ export async function getFriends(): Promise<FriendRecord[]> {
   return data as unknown as FriendRecord[]
 }
 
+// Get incoming friend requests (user_id → profile)
 export async function getIncomingRequests() {
   const {
     data: { session },
   } = await supabase.auth.getSession()
+
   const userId = session?.user?.id
   if (!userId) throw new Error('Not authenticated')
 
   const { data, error } = await supabase
     .from('friends')
-    .select(`id, user_id, profiles:user_id(username, avatar_url)`)
+    .select(`id, user_id, friend_id, user_profile:profiles!friends_user_id_fkey(username, avatar_url)`)
     .eq('friend_id', userId)
     .eq('status', 'pending')
 
@@ -76,7 +78,7 @@ export async function getIncomingRequests() {
   return data
 }
 
-
+// Accept a friend request
 export async function acceptFriendRequest(friendRequestId: string) {
   const { error: updateError } = await supabase
     .from('friends')
@@ -100,4 +102,14 @@ export async function acceptFriendRequest(friendRequestId: string) {
     friend_id: user_id,
     status: 'accepted',
   })
+}
+
+// Decline
+export async function declineFriendRequest(friendRequestId: string) {
+  const { error } = await supabase
+    .from('friends')
+    .delete()
+    .eq('id', friendRequestId)
+
+  if (error) throw error
 }

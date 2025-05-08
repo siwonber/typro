@@ -13,7 +13,7 @@ export default function NewsFeed() {
 
   return (
     <div className="flex justify-center w-full">
-      <div className="w-full max-w-4xl space-y-6">
+      <div className="w-full max-w-4xl space-y-6 m-10">
         <h2 className="text-3xl font-bold text-text text-center">News</h2>
         {news.map((n, i) => (
           <div

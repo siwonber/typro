@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@lib/supabaseClient'
 import Countdown from './Countdown'
 import ResultPopup from './ResultPopup'
+import FancyButton from './ui/FancyButton'
+
 
 interface Challenge {
   id: string
@@ -127,9 +129,10 @@ export default function Challenge() {
         </div>
       ) : (
         <div className="space-y-4">
-          <button className="px-4 py-1 border border-primary rounded-full" onClick={() => setActiveChallenge(null)}>
+          <FancyButton onClick={() => setActiveChallenge(null)}>
             ← Back
-          </button>
+          </FancyButton>
+
 
           <div className="p-4 bg-surface rounded-lg shadow-md">
             <h3 className="text-lg font-semibold">{activeChallenge.title}</h3>

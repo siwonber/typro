@@ -5,7 +5,8 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@lib/supabaseClient'
 import SettingsModal from './SettingsModal'
 import AddFriendModal from './AddFriendModal'
-import { Cog6ToothIcon, UserPlusIcon } from '@heroicons/react/24/outline'
+import FriendRequestsModal from './FriendRequestsModal'
+import { Cog6ToothIcon, UserPlusIcon, BellIcon } from '@heroicons/react/24/outline'
 import { getFriends, getIncomingRequests, acceptFriendRequest } from '../hooks/friends'
 
 type SidebarProps = {
@@ -18,6 +19,7 @@ export default function Sidebar({ setActive }: SidebarProps) {
   const [isOnline, setIsOnline] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [showAddFriend, setShowAddFriend] = useState(false)
+  const [showFriendRequests, setShowFriendRequests] = useState(false)
 
   const [onlineFriends, setOnlineFriends] = useState<string[]>([])
   const [offlineFriends, setOfflineFriends] = useState<string[]>([])
@@ -88,10 +90,13 @@ export default function Sidebar({ setActive }: SidebarProps) {
           <button onClick={() => setShowAddFriend(true)} className="p-1 text-muted hover:text-text">
             <UserPlusIcon className="w-5 h-5" />
           </button>
+          <button onClick={() => setShowFriendRequests(true)} className="p-1 text-muted hover:text-text">
+            <BellIcon className="w-5 h-5" />
+          </button>
         </div>
       </div>
 
-      {/* Friend Requests */}
+      {/* Friend Requests Preview */}
       {friendRequests.length > 0 && (
         <div className="w-full bg-background/60 p-3 rounded shadow-inner mb-4">
           <h4 className="text-accent font-semibold mb-2">Friend Requests</h4>
@@ -153,6 +158,10 @@ export default function Sidebar({ setActive }: SidebarProps) {
 
       {showAddFriend && (
         <AddFriendModal onClose={() => setShowAddFriend(false)} />
+      )}
+
+      {showFriendRequests && (
+        <FriendRequestsModal onClose={() => setShowFriendRequests(false)} />
       )}
     </div>
   )
