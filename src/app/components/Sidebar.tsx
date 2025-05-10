@@ -42,7 +42,7 @@ export default function Sidebar({ setActive }: SidebarProps) {
 
       if (profile) {
         setUsername(profile.username || 'Unknown')
-        setAvatarUrl(profile.avatar_url || '/images/profile/avatar.png')
+        setAvatarUrl(profile.avatar_url || '/images/profile/avatar1.3.png')
         setIsOnline(profile.is_online)
       }
 
