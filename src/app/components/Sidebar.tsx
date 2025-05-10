@@ -15,7 +15,7 @@ type SidebarProps = {
 
 export default function Sidebar({ setActive }: SidebarProps) {
   const [username, setUsername] = useState('...')
-  const [avatarUrl, setAvatarUrl] = useState('/images/profile/avatar.png')
+  const [avatarUrl, setAvatarUrl] = useState('/images/profile/avatar1.3.png')
   const [isOnline, setIsOnline] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [showAddFriend, setShowAddFriend] = useState(false)
