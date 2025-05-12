@@ -150,7 +150,7 @@ export default function AuthSwitcher() {
         value={identifier}
         onChange={(e) => setIdentifier(e.target.value)}
         onKeyDown={handleKeyDown}
-        className="w-full max-w-xs px-4 py-2 border rounded"
+        className="w-full max-w-xs px-4 py-2 border rounded bg-black/10 text-white placeholder:text-muted"
       />
       {!isLogin && (
         <input
@@ -159,7 +159,7 @@ export default function AuthSwitcher() {
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="w-full max-w-xs px-4 py-2 border rounded"
+          className="w-full max-w-xs px-4 py-2 border rounded bg-black/10 text-white placeholder:text-muted"
         />
       )}
       <input
@@ -168,7 +168,7 @@ export default function AuthSwitcher() {
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         onKeyDown={handleKeyDown}
-        className="w-full max-w-xs px-4 py-2 border rounded"
+        className="w-full max-w-xs px-4 py-2 border rounded bg-black/10 text-white placeholder:text-muted"
       />
       {!isLogin && password.length > 0 && (
         <p
