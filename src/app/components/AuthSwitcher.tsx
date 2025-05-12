@@ -142,15 +142,15 @@ export default function AuthSwitcher() {
   }
 
   return (
-    <div className="flex flex-col gap-4 items-center text-center bg-surface px-6 py-10 rounded-lg shadow-md">
-      <h1 className="text-2xl font-bold">{isLogin ? 'Login' : 'Sign Up'}</h1>
+    <div className="flex flex-col gap-6 items-center text-center bg-surface px-10 py-16 rounded-xl shadow-lg">
+      <h1 className="text-4xl font-extrabold">{isLogin ? 'Login' : 'Sign Up'}</h1>
       <input
         type="text"
         placeholder={isLogin ? 'Email or Username' : 'Email'}
         value={identifier}
         onChange={(e) => setIdentifier(e.target.value)}
         onKeyDown={handleKeyDown}
-        className="w-full max-w-xs px-4 py-2 border rounded bg-black/10 text-white placeholder:text-muted"
+        className="w-full max-w-md px-6 py-4 text-lg border rounded-lg bg-black/10 text-white placeholder:text-muted"
       />
       {!isLogin && (
         <input
@@ -159,7 +159,7 @@ export default function AuthSwitcher() {
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="w-full max-w-xs px-4 py-2 border rounded bg-black/10 text-white placeholder:text-muted"
+          className="w-full max-w-md px-6 py-4 text-lg border rounded-lg bg-black/10 text-white placeholder:text-muted"
         />
       )}
       <input
@@ -168,26 +168,26 @@ export default function AuthSwitcher() {
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         onKeyDown={handleKeyDown}
-        className="w-full max-w-xs px-4 py-2 border rounded bg-black/10 text-white placeholder:text-muted"
+        className="w-full max-w-md px-6 py-4 text-lg border rounded-lg bg-black/10 text-white placeholder:text-muted"
       />
       {!isLogin && password.length > 0 && (
         <p
-          className={`text-sm ${
+          className={`text-base ${
             pwStrength === 'weak' ? 'text-error' : pwStrength === 'medium' ? 'text-yellow-500' : 'text-green-500'
           }`}
         >
           Password strength: {pwStrength}
         </p>
       )}
-      {error && <p className="text-error text-sm">{error}</p>}
+      {error && <p className="text-error text-base">{error}</p>}
       <button
         onClick={handleSubmit}
         disabled={loading}
-        className="bg-primary text-white px-6 py-2 rounded hover:opacity-80 w-full max-w-xs"
+        className="bg-primary text-white text-2xl px-8 py-4 rounded-lg hover:opacity-80 w-full max-w-md"
       >
         {loading ? (isLogin ? 'Logging in...' : 'Creating...') : isLogin ? 'Login' : 'Sign Up'}
       </button>
-      <p className="text-sm text-muted">
+      <p className="text-base text-muted">
         {isLogin ? "Don't have an account?" : 'Already have an account?'}{' '}
         <button className="text-accent underline" onClick={() => setIsLogin(!isLogin)}>
           {isLogin ? 'Sign up' : 'Log in'}
