@@ -79,7 +79,7 @@ export default function Sidebar({ setActive }: SidebarProps) {
               fill
               className="object-contain"
             />
-            <div className="absolute inset-[32%] rounded-full overflow-hidden bg-gray-400">
+            <div className="absolute inset-[31.5%] rounded-full overflow-hidden bg-black">
               <Image
                 src={avatarUrl}
                 alt="Profile"
