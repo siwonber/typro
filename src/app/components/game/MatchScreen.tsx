@@ -31,7 +31,7 @@ export default function MatchScreen({ mode }: { mode: 'ranked' | 'normal' }) {
   const progress = Math.min(100, (correctChars / targetText.length) * 100)
 
   useEffect(() => {
-    if (!finished && input === targetText) {
+    if (!finished && input.length >= targetText.length) {
       setFinished(true)
     }
   }, [input, finished])
@@ -39,7 +39,7 @@ export default function MatchScreen({ mode }: { mode: 'ranked' | 'normal' }) {
   useEffect(() => {
     if (!showCountdown && !finished) {
       const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key.length === 1) {
+        if (e.key.length === 1 && input.length < targetText.length) {
           setInput((prev) => prev + e.key)
         }
         if (e.key === 'Backspace') {
@@ -50,13 +50,12 @@ export default function MatchScreen({ mode }: { mode: 'ranked' | 'normal' }) {
       window.addEventListener('keydown', handleKeyDown)
       return () => window.removeEventListener('keydown', handleKeyDown)
     }
-  }, [showCountdown, finished])
+  }, [showCountdown, finished, input.length])
 
   const elapsedTime = startTime ? ((Date.now() - startTime) / 1000).toFixed(2) : '0.00'
 
   return (
     <div className="w-full h-screen flex flex-col items-center justify-center gap-6 text-text select-none relative">
-
       {/* 🔙 Leave Match Button */}
       {!finished && (
         <div className="absolute top-4 right-4">

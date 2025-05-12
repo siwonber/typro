@@ -105,7 +105,7 @@ export default function Sidebar({ setActive }: SidebarProps) {
               <div key={r.id} className="flex items-center justify-between bg-background/80 p-2 rounded">
                 <div className="flex items-center gap-2">
                   <Image
-                    src={r.profiles.avatar_url || '/images/profile/avatar.png'}
+                    src={r.profiles.avatar_url || '/images/profile/avatar1.3.png'}
                     alt="avatar"
                     width={32}
                     height={32}

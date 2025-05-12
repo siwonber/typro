@@ -115,7 +115,7 @@ export default function AuthSwitcher() {
         id: user.id,
         username: cleanUsername,
         email,
-        avatar_url: '/images/profile/avatar.png',
+        avatar_url: '/images/profile/avatar1.3.png',
         rank_solo: 'bronze',
         rank_duo: 'bronze',
         rank_tournament: 'bronze',
