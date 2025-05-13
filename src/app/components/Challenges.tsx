@@ -7,15 +7,17 @@ import GameText from './game/GameText'
 import ProgressBar from './game/ProgressBar'
 import FancyButton from './ui/FancyButton'
 import ResultScreen from './game/ResultScreen'
+import ChallengeHUD from './game/ChallengeHUD'
 
 interface Challenge {
   id: string
   title: string
   description: string
   text: string
-  required_accuracy: number
   time_limit: number
+  max_errors: number
   badge: string
+  completed?: boolean
 }
 
 export default function Challenge() {
@@ -28,13 +30,30 @@ export default function Challenge() {
   const [isSuccess, setIsSuccess] = useState(false)
 
   useEffect(() => {
-    const fetchChallenges = async () => {
-      const { data, error } = await supabase.from('challenges').select('*')
-      if (error) console.error('Error fetching challenges:', error)
-      else setChallenges(data || [])
+    const fetchData = async () => {
+      const { data: userData } = await supabase.auth.getUser()
+      const userId = userData?.user?.id
+      if (!userId) return
+
+      const { data: allChallenges } = await supabase.from('challenges').select('*')
+
+      const { data: completedData } = await supabase
+        .from('user_challenges')
+        .select('challenge_id')
+        .eq('user_id', userId)
+        .eq('success', true)
+
+      const completedIds = new Set(completedData?.map(c => c.challenge_id))
+
+      const withCompleted = allChallenges?.map(ch => ({
+        ...ch,
+        completed: completedIds.has(ch.id)
+      }))
+
+      setChallenges(withCompleted || [])
     }
 
-    fetchChallenges()
+    fetchData()
   }, [])
 
   useEffect(() => {
@@ -59,13 +78,27 @@ export default function Challenge() {
     }
   }, [showCountdown, finished, input.length])
 
-  const correctChars = input
-    .split('')
-    .filter((char, i) => char === activeChallenge?.text[i])
-    .length
+  const getTypingStats = () => {
+    if (!activeChallenge) return { correct: 0, errors: 0 }
+
+    let correct = 0
+    let errors = 0
+
+    for (let i = 0; i < input.length; i++) {
+      if (input[i] === activeChallenge.text[i]) {
+        correct++
+      } else {
+        errors++
+      }
+    }
+
+    return { correct, errors }
+  }
+
+  const { correct, errors: errorCount } = getTypingStats()
 
   const progress = activeChallenge
-    ? Math.min(100, (correctChars / activeChallenge.text.length) * 100)
+    ? Math.min(100, (input.length / activeChallenge.text.length) * 100)
     : 0
 
   const handleCountdownFinish = () => {
@@ -77,26 +110,23 @@ export default function Challenge() {
     if (!activeChallenge || startTime === null) return
 
     const timeTaken = (Date.now() - startTime) / 1000
-    const accuracy = Number(((correctChars / activeChallenge.text.length) * 100).toFixed(2))
     const passed =
-      accuracy >= activeChallenge.required_accuracy &&
-      timeTaken <= activeChallenge.time_limit
+      timeTaken <= activeChallenge.time_limit && errorCount <= activeChallenge.max_errors
 
     const { data: userData } = await supabase.auth.getUser()
     const userId = userData?.user?.id
     if (!userId) return
 
-    const { error } = await supabase.from('user_challenges').insert([
-      {
-        user_id: userId,
-        challenge_id: activeChallenge.id,
-        accuracy,
-        time_taken: timeTaken,
-        success: passed,
-        badge: activeChallenge.badge
-      }
-    ])
-    if (error) console.error('Error saving challenge result:', error)
+    const insertData = {
+      user_id: userId,
+      challenge_id: activeChallenge.id,
+      time_taken: timeTaken,
+      errors: errorCount,
+      success: passed,
+      badge: activeChallenge.badge
+    }
+
+    await supabase.from('user_challenges').insert([insertData])
 
     setIsSuccess(passed)
     setFinished(true)
@@ -120,11 +150,18 @@ export default function Challenge() {
           {challenges.map(ch => (
             <div
               key={ch.id}
-              className="bg-surface hover:bg-primary/10 p-4 rounded-xl cursor-pointer shadow-md transition-all"
+              className={`bg-surface hover:bg-primary/10 p-4 rounded-xl cursor-pointer shadow-md transition-all relative ${
+                ch.completed ? 'border-2 border-green-500' : ''
+              }`}
               onClick={() => setActiveChallenge(ch)}
             >
               <h2 className="text-xl font-bold">{ch.title}</h2>
               <p className="opacity-80">{ch.description}</p>
+              {ch.completed && (
+                <span className="absolute top-2 right-2 bg-green-600 text-white text-xs px-2 py-1 rounded">
+                  Completed
+                </span>
+              )}
             </div>
           ))}
         </div>
@@ -145,8 +182,8 @@ export default function Challenge() {
       {finished ? (
         <ResultScreen
           time={elapsedTime}
-          errors={input.length - correctChars}
-          mode="normal"
+          errors={errorCount}
+          mode="challenge"
           isChallenge
           isSuccess={isSuccess}
           onRetry={resetChallenge}
@@ -159,6 +196,12 @@ export default function Challenge() {
           <p className="text-muted max-w-xl text-center">{activeChallenge.description}</p>
           <GameText target={activeChallenge.text} input={input} />
           <ProgressBar progress={progress} />
+          <ChallengeHUD
+            elapsedTime={elapsedTime}
+            errorCount={errorCount}
+            maxErrors={activeChallenge.max_errors}
+            timeLimit={activeChallenge.time_limit}
+          />
         </>
       )}
     </div>

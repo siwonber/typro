@@ -1,7 +1,7 @@
 'use client'
 
 interface FancyButtonProps {
-  onClick: () => void
+  onClick?: () => void
   children: React.ReactNode
   className?: string
 }

@@ -1,7 +1,7 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import FancyButton from '@/components/ui/FancyButton'
+import { useView } from '@lib/ViewContext'
 
 interface ResultScreenProps {
   time: string
@@ -20,7 +20,7 @@ export default function ResultScreen({
   isSuccess,
   onRetry
 }: ResultScreenProps) {
-  const router = useRouter()
+  const { setView } = useView()
 
   return (
     <div className="text-center text-2xl space-y-6">
@@ -46,7 +46,7 @@ export default function ResultScreen({
       )}
 
       <div className="mt-6">
-        <FancyButton onClick={() => router.push('/home')}>
+        <FancyButton onClick={() => setView('default')}>
           Back to Menu
         </FancyButton>
       </div>
