@@ -1,15 +1,26 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { getIncomingRequests, acceptFriendRequest } from '../hooks/friends'
+import {
+  getIncomingRequests,
+  acceptFriendRequest,
+  declineFriendRequest,
+} from '../hooks/friends'
 import Image from 'next/image'
+import type { FriendRequest } from '../hooks/friends'
+import { Check, X } from 'lucide-react' 
 
 export default function FriendRequests() {
-  const [requests, setRequests] = useState<any[]>([])
+  const [requests, setRequests] = useState<FriendRequest[]>([])
 
   useEffect(() => {
     const fetch = async () => {
-      const data = await getIncomingRequests()
-      setRequests(data)
+      try {
+        const data = await getIncomingRequests()
+        console.log('FRIEND REQUESTS RAW:', data)
+        setRequests(data)
+      } catch (err) {
+        console.error('Error fetching friend requests:', err)
+      }
     }
     fetch()
   }, [])
@@ -19,30 +30,47 @@ export default function FriendRequests() {
     setRequests((prev) => prev.filter((r) => r.id !== id))
   }
 
-  if (requests.length === 0) return null
+  const handleDecline = async (id: string) => {
+    await declineFriendRequest(id)
+    setRequests((prev) => prev.filter((r) => r.id !== id))
+  }
+
+  if (requests.length === 0)
+    return <p className="text-muted text-sm">No requests found</p>
 
   return (
     <div>
       <h4 className="text-accent font-semibold mb-1">Friend Requests</h4>
       <div className="flex flex-col gap-2">
         {requests.map((r) => (
-          <div key={r.id} className="flex items-center justify-between bg-background/40 p-2 rounded">
+          <div
+            key={r.id}
+            className="flex items-center justify-between bg-background/40 p-2 rounded"
+          >
             <div className="flex items-center gap-2">
               <Image
-                src={r.user_profile?.avatar_url || '/images/profile/avatar.png'}
+                src={r.profiles?.avatar_url || '/images/profile/avatar.png'}
                 alt="avatar"
                 width={32}
                 height={32}
                 className="rounded-full object-cover"
               />
-              <span>{r.user_profile?.username || 'Unknown'}</span>
+              <span>{r.profiles?.username || 'Unknown'}</span>
             </div>
-            <button
-              onClick={() => handleAccept(r.id)}
-              className="text-xs bg-primary text-white px-2 py-1 rounded hover:opacity-90"
-            >
-              Accept
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleAccept(r.id)}
+                className="p-1 rounded bg-green-600 text-white hover:opacity-90"
+              >
+                <Check className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => handleDecline(r.id)}
+                className="p-1 rounded bg-red-600 text-white hover:opacity-90"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         ))}
       </div>

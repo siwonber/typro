@@ -8,6 +8,7 @@ import AddFriendModal from './AddFriendModal'
 import FriendRequestsModal from './FriendRequestsModal'
 import { Cog6ToothIcon, UserPlusIcon, BellIcon } from '@heroicons/react/24/outline'
 import { getFriends, getIncomingRequests, acceptFriendRequest } from '../hooks/friends'
+import type { FriendRequest, FriendProfile } from '../hooks/friends'
 
 type SidebarProps = {
   setActive: (val: 'profile' | 'news') => void
@@ -22,9 +23,9 @@ export default function Sidebar({ setActive }: SidebarProps) {
   const [showAddFriend, setShowAddFriend] = useState(false)
   const [showFriendRequests, setShowFriendRequests] = useState(false)
 
-  const [onlineFriends, setOnlineFriends] = useState<string[]>([])
-  const [offlineFriends, setOfflineFriends] = useState<string[]>([])
-  const [friendRequests, setFriendRequests] = useState<any[]>([])
+  const [onlineFriends, setOnlineFriends] = useState<FriendProfile[]>([])
+  const [offlineFriends, setOfflineFriends] = useState<FriendProfile[]>([])
+  const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -49,10 +50,8 @@ export default function Sidebar({ setActive }: SidebarProps) {
       }
 
       const friends = await getFriends()
-      const online = friends.filter((f) => f.profiles?.is_online).map((f) => f.profiles.username)
-      const offline = friends.filter((f) => !f.profiles?.is_online).map((f) => f.profiles.username)
-      setOnlineFriends(online)
-      setOfflineFriends(offline)
+      setOnlineFriends(friends.filter((f) => f.is_online))
+      setOfflineFriends(friends.filter((f) => !f.is_online))
 
       const incoming = await getIncomingRequests()
       setFriendRequests(incoming)
@@ -74,7 +73,7 @@ export default function Sidebar({ setActive }: SidebarProps) {
         <Link href="/profile/overview" className="hover:scale-105 transition-transform duration-300">
           <div className="relative w-[320px] h-[320px]">
             <Image
-              src={`/images/ranks/${rankSolo}.webp`} // z. B. bronze.webp
+              src={`/images/ranks/${rankSolo}.webp`}
               alt="Rank Badge"
               fill
               className="object-contain"
@@ -106,42 +105,15 @@ export default function Sidebar({ setActive }: SidebarProps) {
         </div>
       </div>
 
-      {/* Friend Requests Preview */}
-      {friendRequests.length > 0 && (
-        <div className="w-full bg-background/70 p-5 rounded-xl shadow-lg mb-8 border border-accent/30">
-          <h4 className="text-accent font-semibold mb-4 text-center text-lg">Friend Requests</h4>
-          <div className="flex flex-col gap-4">
-            {friendRequests.map((r) => (
-              <div key={r.id} className="flex items-center justify-between bg-surface/90 p-4 rounded-lg shadow-sm">
-                <div className="flex items-center gap-4">
-                  <Image
-                    src={r.profiles.avatar_url || '/images/profile/avatar1.3.png'}
-                    alt="avatar"
-                    width={42}
-                    height={42}
-                    className="rounded-full object-cover"
-                  />
-                  <span className="font-medium text-base">{r.profiles.username}</span>
-                </div>
-                <button
-                  onClick={() => handleAccept(r.id)}
-                  className="text-sm bg-primary text-white px-4 py-2 rounded-lg hover:opacity-90 shadow"
-                >
-                  Accept
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+     
 
       {/* Online Friends */}
       <div className="w-full mb-6">
         <h4 className="text-primary font-semibold mb-3 text-lg">🟢 Online Friends</h4>
         <div className="flex flex-col gap-2">
           {onlineFriends.length === 0 && <p className="text-muted text-base">No one online</p>}
-          {onlineFriends.map((name) => (
-            <div key={name} className="px-4 py-2 rounded-lg bg-background/80 shadow-sm">{name}</div>
+          {onlineFriends.map((f) => (
+            <div key={f.id} className="px-4 py-2 rounded-lg bg-background/80 shadow-sm">{f.username}</div>
           ))}
         </div>
       </div>
@@ -151,8 +123,8 @@ export default function Sidebar({ setActive }: SidebarProps) {
         <h4 className="text-muted font-semibold mb-3 text-lg">⚪ Offline Friends</h4>
         <div className="flex flex-col gap-2 text-muted">
           {offlineFriends.length === 0 && <p className="text-base">No friends offline</p>}
-          {offlineFriends.map((name) => (
-            <div key={name} className="px-4 py-2 rounded-lg bg-background/40">{name}</div>
+          {offlineFriends.map((f) => (
+            <div key={f.id} className="px-4 py-2 rounded-lg bg-background/40">{f.username}</div>
           ))}
         </div>
       </div>

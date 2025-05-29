@@ -1,3 +1,4 @@
+// src/app/components/AddFriendModal.tsx
 'use client'
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
@@ -17,34 +18,48 @@ export default function AddFriendModal({ onClose }: Props) {
     setSuccess(false)
 
     try {
-      const res = await fetch('/api/getUserByUsername?username=' + username)
+      const res = await fetch('/api/getUserByUsername?username=' + encodeURIComponent(username))
       const data = await res.json()
 
       if (!data?.id) {
-        setMessage('User not found.')
-        setLoading(false)
+        setMessage('❌ User not found.')
         return
       }
 
       await addFriend(data.id)
       setMessage('✅ Friend request sent!')
       setSuccess(true)
-    } catch (err) {
-      console.error(err)
-      setMessage('❌ ' + (err as Error).message)
+    } catch (err: any) {
+      const msg = err?.message || 'Unknown error'
+      if (msg.includes('pending')) {
+        setMessage('⚠️ Friend request already sent.')
+      } else if (msg.includes('already friends')) {
+        setMessage('⚠️ You are already friends.')
+      } else {
+        setMessage('❌ ' + msg)
+      }
     } finally {
       setLoading(false)
     }
   }
 
   return createPortal(
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-surface p-6 rounded-xl shadow-xl w-full max-w-sm text-text">
-        <h2 className="text-lg font-semibold mb-4">Add Friend</h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm text-[1.6rem] leading-relaxed">
+      <div className="relative w-full max-w-sm bg-surface p-8 rounded-3xl shadow-2xl text-text">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold">Add Friend</h2>
+          <button
+            onClick={onClose}
+            className="text-2xl text-muted hover:text-primary transition-colors"
+            aria-label="Close"
+          >
+            ✕
+          </button>
+        </div>
         <input
           type="text"
           placeholder="Enter username"
-          className="w-full px-4 py-2 rounded border border-muted bg-background mb-2"
+          className="w-full px-4 py-2 rounded-lg border border-muted bg-background text-base mb-3"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           disabled={loading || success}
@@ -52,7 +67,7 @@ export default function AddFriendModal({ onClose }: Props) {
         <button
           onClick={handleAdd}
           disabled={loading || success}
-          className="w-full bg-primary text-white py-2 rounded hover:opacity-90"
+          className="w-full bg-primary text-white py-2 rounded-lg hover:opacity-90 transition-all"
         >
           {loading ? 'Sending...' : success ? 'Sent!' : 'Send Request'}
         </button>

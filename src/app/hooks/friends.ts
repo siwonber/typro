@@ -1,66 +1,144 @@
+'use client'
 import { supabase } from '@lib/supabaseClient'
 
-// Add a new friend request (user → friend)
-export async function addFriend(friendId: string) {
-  const {
-    data: { session },
-    error: sessionError,
-  } = await supabase.auth.getSession()
-
-  if (sessionError || !session?.user) {
-    throw new Error('Not authenticated')
-  }
-
-  const userId = session.user.id
-
-  const { error } = await supabase
-    .from('friends')
-    .insert([{ user_id: userId, friend_id: friendId, status: 'pending' }])
-
-  if (error) throw error
-  return true
-}
-
-// Get accepted friends (friend_id → profile)
-type FriendProfile = {
+export type FriendProfile = {
+  id: string
   username: string
+  avatar_url?: string
   is_online: boolean
 }
 
-type FriendRecord = {
+export type FriendRequest = {
+  id: string
+  user_id: string
   friend_id: string
-  profiles: FriendProfile
+  profiles: {
+    username: string
+    avatar_url?: string
+  }
 }
 
-export async function getFriends(): Promise<FriendRecord[]> {
+// ✅ Add Friend
+export async function addFriend(friendId: string): Promise<void> {
   const {
     data: { session },
-    error: sessionError,
   } = await supabase.auth.getSession()
 
-  if (sessionError || !session?.user) throw sessionError
-  const userId = session.user.id
+  const accessToken = session?.access_token
+  if (!accessToken) throw new Error('Not authenticated')
 
-  const { data, error } = await supabase
-    .from('friends')
-    .select(`
-      id,
-      user_id,
-      friend_id,
-      profiles:friend_id (
-        username,
-        is_online
-      )
-    `)
-    .eq('user_id', userId)
-    .eq('status', 'accepted')
+  const res = await fetch('/api/friends/add', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ friendId }),
+  })
 
-  if (error) throw error
-  return data as unknown as FriendRecord[]
+  if (!res.ok) {
+    let errorMsg = 'Failed to send request'
+    try {
+      const data = await res.json()
+      errorMsg = data?.error || errorMsg
+    } catch {}
+    throw new Error(errorMsg)
+  }
 }
 
-// Get incoming friend requests (user_id → profile)
-export async function getIncomingRequests() {
+// ✅ Get Incoming Requests
+export async function getIncomingRequests(): Promise<FriendRequest[]> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+
+  const accessToken = session?.access_token
+  if (!accessToken) throw new Error('Not authenticated')
+
+  const res = await fetch('/api/friends/incoming', {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  })
+
+  if (!res.ok) {
+    let errorMsg = 'Failed to load requests'
+    try {
+      const data = await res.json()
+      errorMsg = data?.error || errorMsg
+    } catch {}
+    throw new Error(errorMsg)
+  }
+
+  return res.json()
+}
+
+// ✅ Accept Friend Request
+export async function acceptFriendRequest(requestId: string): Promise<void> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+
+  const accessToken = session?.access_token
+  if (!accessToken) throw new Error('Not authenticated')
+
+  const res = await fetch('/api/friends/accept', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ requestId }),
+  })
+
+  if (!res.ok) {
+    let errorMsg = 'Failed to accept request'
+    try {
+      const data = await res.json()
+      errorMsg = data?.error || errorMsg
+    } catch {}
+    throw new Error(errorMsg)
+  }
+}
+
+// ✅ Decline Friend Request
+export async function declineFriendRequest(requestId: string): Promise<void> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+
+  const accessToken = session?.access_token
+  if (!accessToken) throw new Error('Not authenticated')
+
+  const res = await fetch('/api/friends/decline', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ requestId }),
+  })
+
+  if (!res.ok) {
+    let errorMsg = 'Failed to decline request'
+    try {
+      const data = await res.json()
+      errorMsg = data?.error || errorMsg
+    } catch {}
+    throw new Error(errorMsg)
+  }
+}
+
+// ✅ Get Friends (merged from both directions)
+type OutgoingFriendRow = {
+  profiles: FriendProfile[] | null
+}
+
+type IncomingFriendRow = {
+  profiles: FriendProfile[] | null
+}
+
+export async function getFriends(): Promise<FriendProfile[]> {
   const {
     data: { session },
   } = await supabase.auth.getSession()
@@ -68,48 +146,34 @@ export async function getIncomingRequests() {
   const userId = session?.user?.id
   if (!userId) throw new Error('Not authenticated')
 
-  const { data, error } = await supabase
+  const { data: outgoingRaw, error: errorOut } = await supabase
     .from('friends')
-    .select(`id, user_id, friend_id, user_profile:profiles!friends_user_id_fkey(username, avatar_url)`)
+    .select('friend_id, profiles:friend_id ( id, username, avatar_url, is_online )')
+    .eq('user_id', userId)
+    .eq('status', 'accepted')
+
+  const { data: incomingRaw, error: errorIn } = await supabase
+    .from('friends')
+    .select('user_id, profiles:user_id ( id, username, avatar_url, is_online )')
     .eq('friend_id', userId)
-    .eq('status', 'pending')
+    .eq('status', 'accepted')
 
-  if (error) throw error
-  return data
-}
+  if (errorOut || errorIn) throw errorOut || errorIn
 
-// Accept a friend request
-export async function acceptFriendRequest(friendRequestId: string) {
-  const { error: updateError } = await supabase
-    .from('friends')
-    .update({ status: 'accepted' })
-    .eq('id', friendRequestId)
+  const outgoing = (outgoingRaw as OutgoingFriendRow[]).flatMap((row) =>
+    row.profiles && row.profiles.length > 0 ? [row.profiles[0]] : []
+  )
 
-  if (updateError) throw updateError
+  const incoming = (incomingRaw as IncomingFriendRow[]).flatMap((row) =>
+    row.profiles && row.profiles.length > 0 ? [row.profiles[0]] : []
+  )
 
-  const { data, error } = await supabase
-    .from('friends')
-    .select('user_id, friend_id')
-    .eq('id', friendRequestId)
-    .single()
+  const all = [...outgoing, ...incoming]
 
-  if (error || !data) return
+  const unique = new Map<string, FriendProfile>()
+  for (const f of all) {
+    unique.set(f.id, f)
+  }
 
-  const { user_id, friend_id } = data
-
-  await supabase.from('friends').insert({
-    user_id: friend_id,
-    friend_id: user_id,
-    status: 'accepted',
-  })
-}
-
-// Decline
-export async function declineFriendRequest(friendRequestId: string) {
-  const { error } = await supabase
-    .from('friends')
-    .delete()
-    .eq('id', friendRequestId)
-
-  if (error) throw error
+  return Array.from(unique.values())
 }

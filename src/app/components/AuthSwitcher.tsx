@@ -24,8 +24,14 @@ export default function AuthSwitcher() {
     setLoading(true)
     setError(null)
 
-    let email = identifier.trim().toLowerCase()
+    let email = identifier
+      .trim()
+      .toLowerCase()
+      .replace(/[\u200B-\u200D\uFEFF]/g, '') // Zero-width space fix
+
     const cleanUsername = username.trim()
+
+    console.log('→ Email used for validation:', JSON.stringify(email))
 
     if (isLogin) {
       if (!email.includes('@')) {
@@ -55,7 +61,8 @@ export default function AuthSwitcher() {
       await supabase.from('profiles').update({ is_online: true }).eq('id', loginData.user.id)
       router.replace('/home')
     } else {
-      if (identifier && (!email.includes('@') || !email.includes('.'))) {
+      const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+      if (!isValidEmail) {
         setError('Invalid email format')
         setLoading(false)
         return
@@ -86,7 +93,15 @@ export default function AuthSwitcher() {
         return
       }
 
-      const { error: signUpError } = await supabase.auth.signUp({ email, password })
+      console.log('📤 Signing up with:', { email, password })
+
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: 'http://localhost:3000/welcome', // ← passe ggf. an
+        },
+      })
 
       if (signUpError) {
         console.error('SIGNUP ERROR:', signUpError)
