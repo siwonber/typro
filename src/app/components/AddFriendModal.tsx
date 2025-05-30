@@ -1,4 +1,3 @@
-// src/app/components/AddFriendModal.tsx
 'use client'
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
@@ -31,6 +30,7 @@ export default function AddFriendModal({ onClose }: Props) {
       setSuccess(true)
     } catch (err: any) {
       const msg = err?.message || 'Unknown error'
+      // if (msg.includes('pending')) console.warn('Request pending')
       if (msg.includes('pending')) {
         setMessage('⚠️ Friend request already sent.')
       } else if (msg.includes('already friends')) {

@@ -7,7 +7,7 @@ import {
 } from '../hooks/friends'
 import Image from 'next/image'
 import type { FriendRequest } from '../hooks/friends'
-import { Check, X } from 'lucide-react' 
+import { Check, X } from 'lucide-react'
 
 export default function FriendRequests() {
   const [requests, setRequests] = useState<FriendRequest[]>([])
@@ -16,10 +16,10 @@ export default function FriendRequests() {
     const fetch = async () => {
       try {
         const data = await getIncomingRequests()
-        console.log('FRIEND REQUESTS RAW:', data)
+        // console.log('FRIEND REQUESTS RAW:', data)
         setRequests(data)
       } catch (err) {
-        console.error('Error fetching friend requests:', err)
+        // console.error('Error fetching friend requests:', err)
       }
     }
     fetch()

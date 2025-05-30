@@ -55,11 +55,10 @@ export default function MatchScreen({ mode }: { mode: 'ranked' | 'normal' }) {
   const elapsedTime = startTime ? ((Date.now() - startTime) / 1000).toFixed(2) : '0.00'
 
   return (
-    <div className="w-full h-screen flex flex-col items-center justify-center gap-6 text-text select-none relative">
-      {/* 🔙 Leave Match Button */}
+    <div className="w-full h-screen overflow-hidden flex flex-col items-center justify-center text-text select-none relative px-6 py-10">
       {!finished && (
-        <div className="absolute top-4 right-4">
-          <FancyButton onClick={() => router.push('/home')} className="text-sm px-4 py-2">
+        <div className="absolute top-6 right-6">
+          <FancyButton onClick={() => router.push('/home')} className="text-base px-5 py-2.5">
             Leave Match
           </FancyButton>
         </div>
@@ -74,12 +73,12 @@ export default function MatchScreen({ mode }: { mode: 'ranked' | 'normal' }) {
       ) : showCountdown ? (
         <Countdown onCountdownFinish={handleCountdownFinish} />
       ) : (
-        <>
-          <h1 className="text-3xl font-bold capitalize">{mode} match</h1>
-          <Timer />
+        <div className="flex flex-col items-center justify-center gap-8 w-full max-w-4xl">
+          <h1 className="text-5xl font-bold capitalize">{mode} match</h1>
+          <Timer started={!showCountdown && !finished} />
           <GameText target={targetText} input={input} />
           <ProgressBar progress={progress} />
-        </>
+        </div>
       )}
     </div>
   )

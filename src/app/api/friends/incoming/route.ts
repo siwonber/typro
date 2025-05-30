@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
 export async function GET(req: NextRequest) {
-  console.log('🔥 [API] Incoming friend requests route hit')
+  // console.log('🔥 [API] Incoming friend requests route hit')
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
   } = await supabase.auth.getUser()
 
   if (authError || !user) {
-    console.error('❌ Auth error or no user:', authError)
+    // console.error('❌ Auth error or no user:', authError)
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
   }
 
@@ -31,12 +31,12 @@ export async function GET(req: NextRequest) {
     .eq('status', 'pending')
 
   if (requestError) {
-    console.error('❌ DB error:', requestError)
+    // console.error('❌ DB error:', requestError)
     return NextResponse.json({ error: requestError.message }, { status: 500 })
   }
 
   if (!requests || requests.length === 0) {
-    console.log('ℹ️ No friend requests found')
+    // console.log('ℹ️ No friend requests found')
     return NextResponse.json([])
   }
 
@@ -48,7 +48,7 @@ export async function GET(req: NextRequest) {
     .in('id', senderIds)
 
   if (profilesError) {
-    console.error('❌ Profile lookup error:', profilesError)
+    // console.error('❌ Profile lookup error:', profilesError)
     return NextResponse.json({ error: profilesError.message }, { status: 500 })
   }
 
@@ -59,7 +59,7 @@ export async function GET(req: NextRequest) {
     profiles: profileMap.get(r.user_id) ?? null,
   }))
 
-  console.log('✅ Loaded friend requests:\n', JSON.stringify(enriched, null, 2))
+  // console.log('✅ Loaded friend requests:\n', JSON.stringify(enriched, null, 2))
 
   return NextResponse.json(enriched)
 }
